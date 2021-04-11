@@ -1,16 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Google.Apis.Auth.AspNetCore3;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using OAuth2_Test.Services;
 
 namespace OAuth2_Test
 {
@@ -26,6 +22,22 @@ namespace OAuth2_Test
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            //Adding authentication
+            services.AddAuthentication(options =>
+                {
+                    options.DefaultChallengeScheme = GoogleOpenIdConnectDefaults.AuthenticationScheme;
+                    options.DefaultForbidScheme = GoogleOpenIdConnectDefaults.AuthenticationScheme;
+                    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                })
+                .AddCookie()
+                .AddGoogleOpenIdConnect(options =>
+                {
+                    var googleCredentials =
+                        Configuration.GetSection("GoogleCredentials");
+                    options.ClientId = googleCredentials["ClientId"];
+                    options.ClientSecret = googleCredentials["Secret"];
+                });
+            services.AddTransient<IWeatherService, WeatherService>();
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
@@ -44,9 +56,10 @@ namespace OAuth2_Test
             }
 
             app.UseHttpsRedirection();
-
+            
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });

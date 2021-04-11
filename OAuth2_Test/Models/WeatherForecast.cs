@@ -1,6 +1,6 @@
 using System;
 
-namespace OAuth2_Test
+namespace OAuth2_Test.Models
 {
     public class WeatherForecast
     {
